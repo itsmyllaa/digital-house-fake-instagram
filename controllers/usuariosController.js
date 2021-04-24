@@ -1,48 +1,69 @@
-const {Usuario} = require("../models");
+const bcrypt = require('bcryptjs');
+const { Usuario, sequelize } = require('../models/');
 
 const usuariosController = {
-    index: async (req, res) => {
-        const usuarios = await Usuario.findAll();
-        return res.render('usuarios', { listaUsuarios: usuarios });
-    },
-    
-    create: async (req, res) => {
-        const {nome, email, senha} = req.body; 
+    index: async (request, response) => {
+        const usuarios =  await Usuario.findAll();
+        
+        return response.render('usuarios', { listaUsuarios: usuarios });
+    }, 
+    login: (request, response) => {
+        return response.render('login');
+    }, 
+    auth: async (request, response) => {
+        const { email, senha } = request.body;
 
-        const usuario = await Usuario.create({
-            nome,
-            email,
-            senha
+        const usuario = await Usuario.findOne({
+            where: { email }
         });
 
-        return res.json(usuario);
+        if (usuario && bcrypt.compareSync(senha, usuario.senha)) {
+            request.session.usuarioLogado = usuario; //criando atributo usuarioLogado na session
+            return response.redirect('/'); // redirecionando para pagina inicial
+        } else {
+            return response.redirect('/usuarios/login');
+        }
     },
+    registro: (request, response) => {
+        return response.render('registro');
+    },
+    create: async (request, response) => {
+        const {nome, email, senha} = request.body;
 
-    update: async (req, res) => {
-        const {id} = req.params;
-        const {nome, email, senha} = req.body;
+        const senhaCrypt = bcrypt.hashSync(senha, 10);
 
-        const usuario = await Usuario.update({
+        const novoUsuario = await Usuario.create({
             nome,
             email,
+            senha: senhaCrypt
+        });
+
+        return response.redirect('/usuarios/login');
+    },
+    update: async (request, response) => {
+        const { id } = request.params;
+        const { nome, email, senha } = request.body;
+
+        const usuarioAtualizado = await Usuario.update({
+            nome, 
+            email, 
             senha
         }, {
-            where: {id}
-        });
+            where: { id }
+        })
 
-        return res.json(usuario);
+        return response.send(usuarioAtualizado);
     },
+    delete: async (request, response) => {
+        const { id } = request.params;
 
-    delete: async (req, res) => {
-        const {id} = req.params;
-        
-        const usuario = await Usuario.destroy({
+        const usuarioDeconstado = await Usuario.destroy({
             where: {id}
         });
 
-        return res.json(usuario);
+        return response.json(usuarioDeconstado);
+        
     }
-
 }
 
 module.exports = usuariosController;

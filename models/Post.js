@@ -1,10 +1,10 @@
 module.exports = (sequelize, DataTypes) => {
 
-    //define(nomeModel, colunas, config)
+    // define(nomeModel, colunas, config)
     const Post = sequelize.define(
-        'Post', {
-            texto: DataTypes.STRING(100),
-            img: DataTypes.STRING(100),
+        "Post", {
+            texto: DataTypes.STRING,
+            img: DataTypes.STRING,
             usuarios_id: DataTypes.INTEGER,
             n_likes: DataTypes.INTEGER
         }, {
@@ -13,28 +13,21 @@ module.exports = (sequelize, DataTypes) => {
         }
     );
 
-    //Relação N:1 (vários posts de 1 usuário)
-    // Post.associate = (models) => {
-    //     Post.belongsTo(models.Usuario, {
-    //         as: "usuario",
-    //         foreignKey: "usuarios_id"
-    //     });
+    Post.associate = (models) => {
+        // relação N:1 (vários posts de 1 usuario)
+        Post.belongsTo(models.Usuario, { as: "usuario", foreignKey: "usuarios_id" });
+        // relação 1:N (post tem varios comentarios)
+        Post.hasMany(models.Comentario, { as: "comentarios", foreignKey: "posts_id" });
+        // relação N:M (post tem curtidas de varios usuarios)
+        Post.belongsToMany(models.Usuario, {
+            as: "curtiu", // alias da relação
+            through: "curtidas", // tabela intermediária
+            foreignKey: "posts_id",
+            otherKey: "usuarios_id",
+            timestamps: false
+        })
+    }
 
-    //     // Relação 1:N (1 post com vários comentarios)
-    //     Post.hasMany(models.Comentario, {
-    //         as: "comentarios",
-    //         foreignKey: "posts_id"
-    //     });
-
-    //     // Relação N:M (1 post com curtidas de vários usuários)
-    //     Post.belongsToMany(models.Usuario, {
-    //         as: "curtiu",
-    //         through: "curtidas",
-    //         foreignKey: "posts_id",
-    //         otherKey: "usuarios_id",
-    //         timestamps: false
-    //     });
-    // };
-    
     return Post;
-};
+
+}

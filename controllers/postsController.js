@@ -1,50 +1,57 @@
-const {Post} = require("../models");
+const { request } = require('express');
+const { Post } = require('../models/');
 
 const postsController = {
-    index: async (req, res) => {
-        const posts = await Post.findAll();
-        return res.json(posts);
-    },
-
-    create: async (req, res) => {
-        const {texto, img, usuarios_id, n_likes} = req.body; 
-
-        const post = await Post.create({
-            texto,
-            img,
-            usuarios_id,
-            n_likes
+    index: async (request, response) => {
+        const posts = await Post.findAll({
+            include: ['usuario', 'comentarios', 'curtiu']
         });
 
-        return res.json(post);
+        return response.render('index', { listaPosts: posts });
     },
+    show: async(request, response) => {
+        const { usuarios_id } = request.params;
 
-    update: async (req, res) => {
-        const {id} = req.params;
-        const {texto, img, usuarios_id, n_likes} = req.body; 
+        const postsUsuario = await Post.findAll({
+            where: {
+                usuarios_id
+            }
+        });
 
-        const post = await Post.update({
-            texto,
-            img,
-            usuarios_id,
-            n_likes
+        return response.json(postsUsuario);
+    },
+    create: async (request, response) => {
+        const { texto, img, usuarios_id } = request.body;
+        
+        const novoPost = Post.create({
+            texto, img, usuarios_id
+        })
+
+        return response.json(novoPost);
+    },
+    update: async (request, response) => {
+        const { id } = request.params;
+        const { texto, img, usuarios_id } = request.body;
+        
+        const postAtualizado = Post.update({
+            texto, img, usuarios_id
         }, {
             where: {id}
-        });
+        })
 
-        return res.json(post);
+        return response.json(postAtualizado);
     },
-
-    delete: async (req, res) => {
-        const {id} = req.params;
+    delete: async (request, response) => {
+        const { id } = request.params;
         
-        const post = await Post.destroy({
+        const postDeletado = Post.destroy({
             where: {id}
-        });
+        })
 
-        return res.json(post);
+        return response.json(postDeletado);
     }
 
-}
+    
+}   
 
 module.exports = postsController;
